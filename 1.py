@@ -14,17 +14,23 @@ def ellipsoid(x, alpha=1000):
 
 def ellipsoid_d1(x, alpha=1000):
     d = len(x)
-    res = 0
+    res = []
     for i in range(d):
-        res += 2 * alpha**(i/(d-1)) * x[i]
+        res.append(2 * alpha**(i/(d-1)) * x[i])
     return res
 
 
 def ellipsoid_d2(x, alpha=1000):
     d = len(x)
-    res = 0
+    res = []
     for i in range(d):
-        res += 2 * alpha ** (i / (d - 1))
+        tmp = []
+        for j in range(d):
+            if i == j:
+                tmp.append(2 * alpha ** (i / (d - 1)))
+            else:
+                tmp.append(0)
+        res.append(tmp)
     return res
 
 
@@ -34,16 +40,29 @@ def log_ellipsoid(x, alpha=1000, epsilon=1e-16):
 
 
 def log_ellipsoid_d1(x, alpha=1000, epsilon=1e-16):
+    d = len(x)
     elli = ellipsoid(x, alpha)
-    elli_d1 = ellipsoid_d1(x, alpha)
-    return elli_d1/(epsilon + elli)
+    res = []
+    for i in range(d):
+        res.append((2*alpha**(i/(d-1))*x[i])/(epsilon+elli))
+    return res
 
 
 def log_ellipsoid_d2(x, alpha=1000, epsilon=1e-16):
-    elli_d2 = ellipsoid_d2(x, alpha)
-    elli_d1 = ellipsoid_d1(x, alpha)
+    d = len(x)
+    res = []
     elli = ellipsoid(x, alpha)
-    return (elli_d2 * (epsilon + elli) - elli_d1 ** 2)/(epsilon + elli)**2
+    for i in range(d):
+        tmp = []
+        for j in range(d):
+            if i == j:
+                tmp.append((2*alpha**(i/(d-1))*(epsilon+elli)
+                           - (2*alpha**(i/(d-1))*x[i])**2)/(epsilon+elli)**2)
+            else:
+                tmp.append((-2*alpha**(i/(d-1))*x[i] * 2*alpha**(j/(d-1))*x[j])
+                           / (epsilon+elli)**2)
+        res.append(tmp)
+    return res
 
 
 def plotting(x, y, z, name, st=0.1):
@@ -81,54 +100,14 @@ def test2():
         for x2 in range(-50, 50):
             x.append([x1/10.0, x2/10.0])
     x = np.array(x)
-    res = list(map(ellipsoid_d1, x))
-    plotting(5, 5, res, "ellipsoid_d1")
-
-
-def test3():
-    x = []
-    for x1 in range(-50, 50):
-        for x2 in range(-50, 50):
-            x.append([x1/10.0, x2/10.0])
-    x = np.array(x)
-    res = list(map(ellipsoid_d2, x))
-    plotting(5, 5, res, "ellipsoid_d2")
-
-
-def test4():
-    x = []
-    for x1 in range(-50, 50):
-        for x2 in range(-50, 50):
-            x.append([x1/10.0, x2/10.0])
-    x = np.array(x)
     res = list(map(log_ellipsoid, x))
     plotting(5, 5, res, "log_ellipsoid")
 
 
-def test5():
-    x = []
-    for x1 in range(-50, 50):
-        for x2 in range(-50, 50):
-            x.append([x1/10.0, x2/10.0])
-    x = np.array(x)
-    res = list(map(log_ellipsoid_d1, x))
-    plotting(5, 5, res, "log_ellipsoid_d1")
-
-
-def test6():
-    x = []
-    for x1 in range(-50, 50):
-        for x2 in range(-50, 50):
-            x.append([x1/10.0, x2/10.0])
-    x = np.array(x)
-    res = list(map(log_ellipsoid_d2, x))
-    plotting(5, 5, res, "log_ellipsoid_d2")
-
-
 test1()
 test2()
-test3()
-test4()
-test5()
-test6()
+
 plt.show()
+
+print(log_ellipsoid_d1([1, 2, 3]))
+print(log_ellipsoid_d2([1, 2, 3]))
