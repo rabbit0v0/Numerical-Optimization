@@ -58,12 +58,17 @@ def f_5(x):
 
 
 def opti(func):
+    # function value
     r1, r2, r3 = 0, 0, 0
+    # time, Simon said we can calculate average time of success/fail. Doing that.
     t1, t2, t3 = 0, 0, 0
+    # frequency of success, minimize would fail
     s1, s2, s3 = 0, 0, 0
+    # number of iteration
     i1, i2, i3 = 0, 0, 0
+    points = 1000
 
-    for i in range(1000):
+    for i in range(points):
         # length = np.random.randint(2, 10, 1)[0]
         length = 5
         x = np.random.rand(length)*5
@@ -95,9 +100,9 @@ def opti(func):
         if res3.success:
             s3 += 1
 
-    print("BFGS", r1/1000, i1/1000, t1/1000, s1/1000)
-    print("Nelder-Mead", r2 / 1000, i2 / 1000, t2 / 1000, s2 / 1000)
-    print("CG", r3 / 1000, i3 / 1000, t3 / 1000, s3 / 1000)
+    print("BFGS", i1/points, t1/points, r1/points, s1/points)
+    print("Nelder-Mead", i2 / points, t2 / points, r2 / points, s2 / points)
+    print("CG", i3 / points, t3 / points, r3 / points, s3 / points)
 
 
 opti(ellipsoid)
