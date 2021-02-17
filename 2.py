@@ -59,13 +59,17 @@ def f_5(x):
 
 def opti(func):
     # function value
-    r1, r2, r3 = 0, 0, 0
+    r1_s, r2_s, r3_s = 0, 0, 0
+    r1_f, r2_f, r3_f = 0, 0, 0
     # time, Simon said we can calculate average time of success/fail. Doing that.
-    t1, t2, t3 = 0, 0, 0
+    t1_s, t2_s, t3_s = 0, 0, 0
+    t1_f, t2_f, t3_f = 0, 0, 0
     # frequency of success, minimize would fail
     s1, s2, s3 = 0, 0, 0
     # number of iteration
     i1, i2, i3 = 0, 0, 0
+    i1_s, i2_s, i3_s = 0, 0, 0
+    i1_f, i2_f, i3_f = 0, 0, 0
     points = 1000
 
     for i in range(points):
@@ -74,36 +78,57 @@ def opti(func):
         x = np.random.rand(length)*5
 
         tmp1 = time.process_time()
-        res1 = minimize(func, x, method="BFGS", tol=1e-6, options={"disp": False, "maxiter": 500})
+        res1 = minimize(func, x, method="BFGS", tol=1e-6, options={"disp": False})
         tmp2 = time.process_time()
-        t1 += tmp2-tmp1
         i1 += res1.nit
         if res1.success:
             s1 += 1
-        r1 += res1.fun
+            t1_s += tmp2-tmp1
+            r1_s += res1.fun
+            i1_s += res1.nit
+        else:
+            t1_f += tmp2-tmp1
+            r1_f += res1.fun
+            i1_f += res1.nit
 
         tmp1 = time.process_time()
-        res2 = minimize(func, x, method="Nelder-Mead", tol=1e-6, options={"disp": False, "maxiter": 500})
+        res2 = minimize(func, x, method="Nelder-Mead", tol=1e-6, options={"disp": False})
         tmp2 = time.process_time()
-        t2 += tmp2-tmp1
         i2 += res2.nit
-        r2 += res2.fun
         if res2.success:
             s2 += 1
+            t2_s += tmp2 - tmp1
+            r2_s += res2.fun
+            i2_s += res2.nit
+        else:
+            t2_f += tmp2 - tmp1
+            r2_f += res2.fun
+            i2_f += res2.nit
 
         tmp1 = time.process_time()
-        res3 = minimize(func, x, method="CG", tol=1e-6, options={"disp": False, "maxiter": 500})
+        res3 = minimize(func, x, method="CG", tol=1e-6, options={"disp": False})
         tmp2 = time.process_time()
-        t3 += tmp2 - tmp1
         i3 += res3.nit
-        r3 += res3.fun
         if res3.success:
             s3 += 1
+            t3_s += tmp2 - tmp1
+            r3_s += res3.fun
+            i3_s += res3.nit
+        else:
+            t3_f += tmp2 - tmp1
+            r3_f += res3.fun
+            i3_f += res3.nit
 
-    print("BFGS", i1/points, t1/points, r1/points, s1/points)
-    print("Nelder-Mead", i2 / points, t2 / points, r2 / points, s2 / points)
-    print("CG", i3 / points, t3 / points, r3 / points, s3 / points)
+    print("BFGS success", i1_s/s1, t1_s/s1, r1_s/s1, s1/points)
+    print("BFGS fail", i1_f / (points-s1), t1_f / (points-s1), r1_f / (points-s1))
+
+    print("Nelder-Mead success", i2_s/s2, t2_s/s2, r2_s/s2, s2/points)
+    print("Nelder-Mead fail", i2_f / (points-s2), t2_f / (points-s2), r2_f / (points-s2))
+
+    print("CG success", i3_s/s3, t3_s/s3, r3_s/s3, s3/points)
+    print("CG fail", i3_f / (points - s3), t3_f / (points - s3), r3_f / (points - s3))
 
 
 opti(ellipsoid)
+
 
