@@ -57,7 +57,7 @@ def f_5(x):
         return result
 
 
-def opti(func):
+def opti(func, tol):
     # function value
     r1_s, r2_s, r3_s = 0, 0, 0
     r1_f, r2_f, r3_f = 0, 0, 0
@@ -78,7 +78,7 @@ def opti(func):
         x = np.random.rand(length)*5
 
         tmp1 = time.process_time()
-        res1 = minimize(func, x, method="BFGS", tol=1e-6, options={"disp": False})
+        res1 = minimize(func, x, method="BFGS", tol=tol, options={"disp": False})
         tmp2 = time.process_time()
         i1 += res1.nit
         if res1.success:
@@ -92,7 +92,7 @@ def opti(func):
             i1_f += res1.nit
 
         tmp1 = time.process_time()
-        res2 = minimize(func, x, method="Nelder-Mead", tol=1e-6, options={"disp": False})
+        res2 = minimize(func, x, method="Nelder-Mead", tol=tol, options={"disp": False})
         tmp2 = time.process_time()
         i2 += res2.nit
         if res2.success:
@@ -106,7 +106,7 @@ def opti(func):
             i2_f += res2.nit
 
         tmp1 = time.process_time()
-        res3 = minimize(func, x, method="CG", tol=1e-6, options={"disp": False})
+        res3 = minimize(func, x, method="CG", tol=tol, options={"disp": False})
         tmp2 = time.process_time()
         i3 += res3.nit
         if res3.success:
@@ -119,16 +119,30 @@ def opti(func):
             r3_f += res3.fun
             i3_f += res3.nit
 
-    print("BFGS success", i1_s/s1, t1_s/s1, r1_s/s1, s1/points)
-    print("BFGS fail", i1_f / (points-s1), t1_f / (points-s1), r1_f / (points-s1))
+    if s1 > 0:
+        print("BFGS success", i1_s/s1, t1_s/s1, r1_s/s1, s1/points)
+    if s1 < points:
+        print("BFGS fail", i1_f / (points-s1), t1_f / (points-s1), r1_f / (points-s1))
 
-    print("Nelder-Mead success", i2_s/s2, t2_s/s2, r2_s/s2, s2/points)
-    print("Nelder-Mead fail", i2_f / (points-s2), t2_f / (points-s2), r2_f / (points-s2))
+    if s2 > 0:
+        print("Nelder-Mead success", i2_s/s2, t2_s/s2, r2_s/s2, s2/points)
+    if s2 < points:
+        print("Nelder-Mead fail", i2_f / (points-s2), t2_f / (points-s2), r2_f / (points-s2))
 
-    print("CG success", i3_s/s3, t3_s/s3, r3_s/s3, s3/points)
-    print("CG fail", i3_f / (points - s3), t3_f / (points - s3), r3_f / (points - s3))
+    if s3 > 0:
+        print("CG success", i3_s/s3, t3_s/s3, r3_s/s3, s3/points)
+    if s3 < points:
+        print("CG fail", i3_f / (points - s3), t3_f / (points - s3), r3_f / (points - s3))
 
 
-opti(ellipsoid)
-
+print("f1")
+opti(ellipsoid, 1e-6)
+print("f3")
+opti(log_ellipsoid, 1e-6)
+print("f2")
+opti(Rosenbrock, 1e-6)
+print("f4")
+opti(f_4, 1e-6)
+print("f5")
+opti(f_5, 1e-6)
 
