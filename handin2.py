@@ -1,6 +1,7 @@
 from scipy.optimize import minimize
 import numpy as np
 import time
+import matplotlib.pyplot as plt
 
 
 # x is an array
@@ -70,9 +71,9 @@ def opti(func, tol):
     i1, i2, i3 = 0, 0, 0
     i1_s, i2_s, i3_s = 0, 0, 0
     i1_f, i2_f, i3_f = 0, 0, 0
-    points = 1000
+    points = 100
 
-    for i in range(points):
+    for i in range(1):
         # length = np.random.randint(2, 10, 1)[0]
         length = 5
         x = np.random.rand(length)*5
@@ -119,30 +120,49 @@ def opti(func, tol):
             r3_f += res3.fun
             i3_f += res3.nit
 
-    if s1 > 0:
-        print("BFGS success", i1_s/s1, t1_s/s1, r1_s/s1, s1/points)
-    if s1 < points:
-        print("BFGS fail", i1_f / (points-s1), t1_f / (points-s1), r1_f / (points-s1))
+    # if s1 > 0:
+    #     print("BFGS success", i1_s/s1, t1_s/s1, r1_s/s1, s1/points)
+    # if s1 < points:
+    #     print("BFGS fail", i1_f / (points-s1), t1_f / (points-s1), r1_f / (points-s1))
+    #
+    # if s2 > 0:
+    #     print("Nelder-Mead success", i2_s/s2, t2_s/s2, r2_s/s2, s2/points)
+    # if s2 < points:
+    #     print("Nelder-Mead fail", i2_f / (points-s2), t2_f / (points-s2), r2_f / (points-s2))
+    #
+    # if s3 > 0:
+    #     print("CG success", i3_s/s3, t3_s/s3, r3_s/s3, s3/points)
+    # if s3 < points:
+    #     print("CG fail", i3_f / (points - s3), t3_f / (points - s3), r3_f / (points - s3))
 
-    if s2 > 0:
-        print("Nelder-Mead success", i2_s/s2, t2_s/s2, r2_s/s2, s2/points)
-    if s2 < points:
-        print("Nelder-Mead fail", i2_f / (points-s2), t2_f / (points-s2), r2_f / (points-s2))
-
-    if s3 > 0:
-        print("CG success", i3_s/s3, t3_s/s3, r3_s/s3, s3/points)
-    if s3 < points:
-        print("CG fail", i3_f / (points - s3), t3_f / (points - s3), r3_f / (points - s3))
+    return s1/points, s2/points, s3/points
 
 
-print("f1")
-opti(ellipsoid, 1e-6)
-print("f3")
-opti(log_ellipsoid, 1e-6)
-print("f2")
-opti(Rosenbrock, 1e-6)
-print("f4")
-opti(f_4, 1e-6)
-print("f5")
-opti(f_5, 1e-6)
+tols = [1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8]
+y1, y2, y3 = np.zeros(6), np.zeros(6), np.zeros(6)
+for i in range(6):
+    # print("f1")
+    # tmp1, tmp2, tmp3 = opti(ellipsoid, tols[i])
+    # print("f3")
+    # tmp1, tmp2, tmp3 = opti(log_ellipsoid, tols[i])
+    # print("f2")
+    # tmp1, tmp2, tmp3 = opti(Rosenbrock, tols[i])
+    # print("f4")
+    # tmp1, tmp2, tmp3 = opti(f_4, tols[i])
+    # print("f5")
+    tmp1, tmp2, tmp3 = opti(f_5, tols[i])
+    y1[i] = tmp1
+    y2[i] = tmp2
+    y3[i] = tmp3
+
+print(y1, y2, y3)
+
+t = [-3, -4, -5, -6, -7, -8]
+plt.plot(t, y1, 'b', t, y2, 'g', t, y3, 'y')
+plt.legend(("BFGS", "Nelder-Mead", "CG"))
+plt.xlabel("tolerance 10^x")
+plt.ylabel("success rate")
+plt.title("minimization for F5")
+plt.show()
+
 
