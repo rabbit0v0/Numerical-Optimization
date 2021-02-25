@@ -264,6 +264,12 @@ def h_d1(x):
     return np.exp(x * q) / (1 + np.exp(x * q))
 
 
+def h_d11(x):
+    if x >= 0:
+        return -(np.exp(-q * x) / (1 + np.exp(-q * x)))
+    return -(1 / (1 + np.exp(q * x)))
+
+
 def h_d2(x):
     if x >= 0:
         return (q * np.exp(-x * q)) / (1 + np.exp(-x * q))**2
@@ -299,7 +305,7 @@ def f_5grad(x):
         d = len(x)
         grad = np.zeros(d)
         for i in range(d):
-            grad[i] = 2 * h(x[i]) * h_d1(x[i]) - 100 * 2 * h(-x[i]) * h_d1(-x[i])
+            grad[i] = 2 * h_safe(x[i]) * h_d1(x[i]) - 100 * 2 * h_safe(-x[i]) * h_d1(-x[i])
         return grad
 
 
@@ -312,9 +318,10 @@ def f_5hessian(x):
         d = len(x)
         hessian = np.zeros((d, d))
         for i in range(d):
-            hessian[i, i] = 2 * np.exp(q * x[i]) * (np.exp(q * x[i]) + np.log(np.exp(q * x[i]) + 1)) / (
-                    np.exp(q * x[i]) + 1) ** 2 + 200 * np.exp(-2 * q * x[i]) * (
-                           np.exp(q * x[i]) * np.log(np.exp(-q * x[i]) + 1) + 1) / (np.exp(-q * x[i]) + 1) ** 2
+            hessian[i, i] = 2 * h_d1(x[i])**2 + 2*h_safe(x[i])*h_d2(x[i]) + 200*h_d11(x[i])**2
+            # 2 * np.exp(q * x[i]) * (np.exp(q * x[i]) + np.log(np.exp(q * x[i]) + 1)) / (
+            #     np.exp(q * x[i]) + 1) ** 2 + 200 * np.exp(-2 * q * x[i]) * (
+            #            np.exp(q * x[i]) * np.log(np.exp(-q * x[i]) + 1) + 1) / (np.exp(-q * x[i]) + 1) ** 2
         return hessian
 
 

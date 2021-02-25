@@ -13,7 +13,7 @@ def backtracking(alpha, rho, c, p, x, fun, fun_g):
     return alpha
 
 
-def plot_convergence(xs, name):
+def plot_distance(xs, name):
     _x = xs[-1]
     it = np.arange(xs.shape[0])
     plt.plot(it, np.linalg.norm(xs-_x, axis=1), 'b')
@@ -21,6 +21,17 @@ def plot_convergence(xs, name):
     plt.title(name)
     plt.xlabel("iteration")
     plt.ylabel("distance of x & x*")
+    plt.show()
+
+
+def plot_convergence(xs, name):
+    _x = xs[-1]
+    it = np.arange(xs.shape[0]-1)
+    plt.plot(it, np.linalg.norm(xs[1:]-_x, axis=1)**2/np.linalg.norm(xs[:-1]-_x, axis=1)**2, 'b')
+    plt.yscale("log")
+    plt.title(name)
+    plt.xlabel("iteration")
+    plt.ylabel("convergence of x")
     plt.show()
 
 
@@ -34,7 +45,7 @@ def plot_gradient(g, name):
     plt.show()
 
 
-def steepest_descent(x, fun, fun_g, alpha=1.0, rho=0.6, c=1e-4, max_iter=1000):
+def steepest_descent(x, fun, fun_g, alpha=1.0, rho=0.6, c=1e-4, max_iter=1000, name=""):
     count = 0
     gradient = []
     xs = []
@@ -47,12 +58,13 @@ def steepest_descent(x, fun, fun_g, alpha=1.0, rho=0.6, c=1e-4, max_iter=1000):
         xs.append(xx)
         count += 1
     print("steepest steps:", count)
-    plot_gradient(np.array(gradient), "Steepest Descent")
-    plot_convergence(np.array(xs), "Steepest Descent")
+    plot_gradient(np.array(gradient), "Steepest Descent - "+name)
+    plot_convergence(np.array(xs), "Steepest Descent - "+name)
+    plot_distance(np.array(xs), "Steepest Descent - "+name)
     return x
 
 
-def newton(x, fun, fun_g, fun_h, beta=1e-3, alpha=1.0, rho=0.6, c=1e-4, max_iter=1000):
+def newton(x, fun, fun_g, fun_h, beta=1e-3, alpha=1.0, rho=0.6, c=1e-4, max_iter=1000, name=""):
     count = 0
     gradient = []
     xs = []
@@ -66,7 +78,7 @@ def newton(x, fun, fun_g, fun_h, beta=1e-3, alpha=1.0, rho=0.6, c=1e-4, max_iter
                 tol = -min_diag + beta
             d = hessian.shape[0]
             hessian_modi = hessian + tol * np.identity(d)
-            while (not is_pos_def(hessian_modi)) or (hessian_modi != hessian_modi.T).any():
+            while not is_pos_def(hessian_modi):
                 tol = max(2*tol, beta)
                 hessian_modi = hessian + tol * np.identity(d)
         else:
@@ -79,72 +91,75 @@ def newton(x, fun, fun_g, fun_h, beta=1e-3, alpha=1.0, rho=0.6, c=1e-4, max_iter
         xs.append(xx)
         count += 1
     print("Newton steps:", count)
-    plot_gradient(np.array(gradient), "Newton's Method")
-    plot_convergence(np.array(xs), "Newton's Method")
+    plot_gradient(np.array(gradient), "Newton's Method - "+name)
+    plot_convergence(np.array(xs), "Newton's Method - "+name)
+    plot_distance(np.array(xs), "Newton's Method - "+name)
     return x
 
 
 def test_1(x):
     print("Ellipsoid test")
-    res1 = steepest_descent(np.array(x), func.ellipsoid, func.ellipsoid_d1)
+    res1 = steepest_descent(np.array(x), func.ellipsoid, func.ellipsoid_d1, name="f1")
     print(res1)
     print(func.ellipsoid(res1))
 
-    res2 = newton(np.array(x), func.ellipsoid, func.ellipsoid_d1, func.ellipsoid_d2)
+    res2 = newton(np.array(x), func.ellipsoid, func.ellipsoid_d1, func.ellipsoid_d2, name="f1")
     print(res2)
     print(func.ellipsoid(res2))
 
 
 def test_2(x):
     print("Rosenbrock test")
-    res1 = steepest_descent(np.array(x), func.Rosenbrock, func.Grad_Ros)
+    res1 = steepest_descent(np.array(x), func.Rosenbrock, func.Grad_Ros, name="f2")
     print(res1)
-    print(func.ellipsoid(res1))
+    print(func.Rosenbrock(res1))
 
-    res2 = newton(np.array(x), func.Rosenbrock, func.Grad_Ros, func.Hessian_Ros)
+    res2 = newton(np.array(x), func.Rosenbrock, func.Grad_Ros, func.Hessian_Ros, name="f2")
     print(res2)
-    print(func.ellipsoid(res2))
+    print(func.Rosenbrock(res2))
 
 
 def test_3(x):
     print("Log-Ellipsoid test")
-    res1 = steepest_descent(np.array(x), func.log_ellipsoid, func.log_ellipsoid_d1)
+    res1 = steepest_descent(np.array(x), func.log_ellipsoid, func.log_ellipsoid_d1, name="f3")
     print(res1)
-    print(func.ellipsoid(res1))
+    print(func.log_ellipsoid(res1))
 
-    res2 = newton(np.array(x), func.log_ellipsoid, func.log_ellipsoid_d1, func.log_ellipsoid_d2)
+    res2 = newton(np.array(x), func.log_ellipsoid, func.log_ellipsoid_d1, func.log_ellipsoid_d2, name="f3")
     print(res2)
-    print(func.ellipsoid(res2))
+    print(func.log_ellipsoid(res2))
 
 
 def test_4(x):
     print("Attractive-Sector test - F4")
-    res1 = steepest_descent(np.array(x), func.f_4, func.f_4grad)
+    res1 = steepest_descent(np.array(x), func.f_4, func.f_4grad, name="f4")
     print(res1)
-    print(func.ellipsoid(res1))
+    print(func.f_4(res1))
 
-    res2 = newton(np.array(x), func.f_4, func.f_4grad, func.f_4hessian)
+    res2 = newton(np.array(x), func.f_4, func.f_4grad, func.f_4hessian, name="f4")
     print(res2)
-    print(func.ellipsoid(res2))
+    print(func.f_4(res2))
 
 
 def test_5(x):
     print("Attractive-Sector test - F5")
-    res1 = steepest_descent(np.array(x), func.f_5, func.f_5grad)
+    res1 = steepest_descent(np.array(x), func.f_5, func.f_5grad, name="f5")
     print(res1)
-    print(func.ellipsoid(res1))
+    print(func.f_5(res1))
 
-    res2 = newton(np.array(x), func.f_5, func.f_5grad, func.f_5hessian)
+    res2 = newton(np.array(x), func.f_5, func.f_5grad, func.f_5hessian, name="f5")
     print(res2)
-    print(func.ellipsoid(res2))
+    print(func.f_5(res2))
 
 
 x0 = [2.0, 4.0]
-# test_1(x0)
-test_2(x0)
+x1 = [2.0, 4.0]
+test_1(x0)
+# test_2(x1)
 # test_3(x0)
+# test_4(x0)
+# test_5(x0)
 
-x1 = [2.0, 1.0]
-# test_4(x1)
-# test_5(x1)
+
+
 
