@@ -56,10 +56,10 @@ def log_ellipsoid_d2(x, alpha=1000, epsilon=1e-16):
         tmp = []
         for j in range(d):
             if i == j:
-                tmp.append((2*alpha**(i/(d-1))*(epsilon+elli)
-                           - (2*alpha**(i/(d-1))*x[i])**2)/(epsilon+elli)**2)
+                tmp.append((2*alpha**(i/(d-1)))/(epsilon+elli)
+                           - (2*x[i]**2)/(epsilon+elli)**2)
             else:
-                tmp.append((-2*alpha**(i/(d-1))*x[i] * 2*alpha**(j/(d-1))*x[j])
+                tmp.append((-4*alpha**((i+j)/(d-1))*x[i]*x[j])
                            / (epsilon+elli)**2)
         res.append(tmp)
     return np.array(res)
@@ -259,10 +259,14 @@ def f_5_plot():
 #
 
 def h_d1(x):
+    if x >= 0:
+        return 1 / (1 + np.exp(-x * q))
     return np.exp(x * q) / (1 + np.exp(x * q))
 
 
 def h_d2(x):
+    if x >= 0:
+        return (q * np.exp(-x * q)) / (1 + np.exp(-x * q))**2
     return (q * np.exp(x * q)) / (1 + np.exp(x * q)) ** 2
 
 
