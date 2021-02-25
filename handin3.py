@@ -7,8 +7,8 @@ def is_pos_def(x):
     return np.all(np.linalg.eigvals(x) > 0)
 
 
-def backtracking(alpha, rho, c, p, x, fun, fun_g):
-    while fun(x+alpha*p) > fun(x) + c * alpha * fun_g(x).T @ p:
+def backtracking(p, x, fun, fun_g, alpha=1.0, rho=0.6, c=1e-4):
+    while fun(x+alpha*p) > fun(x) + c * alpha * np.dot(fun_g(x), p):
         alpha = rho * alpha
     return alpha
 
@@ -45,13 +45,14 @@ def plot_gradient(g, name):
     plt.show()
 
 
-def steepest_descent(x, fun, fun_g, alpha=1.0, rho=0.6, c=1e-4, max_iter=1000, name=""):
+def steepest_descent(x, fun, fun_g, max_iter=5000, name=""):
     count = 0
     gradient = []
     xs = []
     while np.linalg.norm(fun_g(x)) > 1e-6 and count < max_iter:
         p = -fun_g(x)
-        alpha = backtracking(alpha, rho, c, p, x, fun, fun_g)
+        alpha = backtracking(p, x, fun, fun_g)
+        # alpha = backtracking_LS(x, fun, fun_g, p)
         x += alpha * p
         xx = list(x)
         gradient.append(fun_g(x))
@@ -64,7 +65,7 @@ def steepest_descent(x, fun, fun_g, alpha=1.0, rho=0.6, c=1e-4, max_iter=1000, n
     return x
 
 
-def newton(x, fun, fun_g, fun_h, beta=1e-3, alpha=1.0, rho=0.6, c=1e-4, max_iter=1000, name=""):
+def newton(x, fun, fun_g, fun_h, beta=1e-3, max_iter=5000, name=""):
     count = 0
     gradient = []
     xs = []
@@ -84,7 +85,7 @@ def newton(x, fun, fun_g, fun_h, beta=1e-3, alpha=1.0, rho=0.6, c=1e-4, max_iter
         else:
             hessian_modi = hessian
         p = - np.linalg.inv(hessian_modi) @ fun_g(x)
-        alpha = backtracking(alpha, rho, c, p, x, fun, fun_g)
+        alpha = backtracking(p, x, fun, fun_g)
         x += alpha * p
         xx = list(x)
         gradient.append(fun_g(x))
@@ -154,10 +155,10 @@ def test_5(x):
 
 x0 = [2.0, 4.0]
 x1 = [2.0, 4.0]
-test_1(x0)
+# test_1(x0)
 # test_2(x1)
 # test_3(x0)
-# test_4(x0)
+test_4(x0)
 # test_5(x0)
 
 
