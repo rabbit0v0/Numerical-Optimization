@@ -14,6 +14,12 @@ def backtracking(p, x, fun, fun_g, alpha=1.0, rho=0.6, c=1e-4):
     return alpha
 
 
+def backtracking1(p, x, fun, fun_g, alpha=1000.0, rho=0.6, c=1e-4):
+    while fun(x+alpha*p) > fun(x) + c * alpha * np.dot(fun_g(x), p):
+        alpha = rho * alpha
+    return alpha
+
+
 def plot_distance(xs, name):
     _x = xs[-1]
     it = np.arange(xs.shape[0])
@@ -58,20 +64,63 @@ def plot_convergence(xs, fun, label, color='b'):
 
 def plot_gradient(g, name):
     it = np.arange(g.shape[0])
-    plt.plot(it, np.linalg.norm(g, axis=1), 'b')
+    plt.plot(it, np.linalg.norm(g, axis=1), 'b', label="alpha=1")
     plt.yscale("log")
     plt.title(name)
     plt.xlabel("iteration")
     plt.ylabel("gradient")
-    plt.show()
+    # plt.show()
 
 
-def steepest_descent(_x, fun, fun_g, max_iter=1000, name=""):
+def cal_fun(xs, fun):
+    res = []
+    for x in xs:
+        res.append(fun(x))
+    return np.array(res)
+
+
+def cal_quo(y1, y2):
+    res = []
+    for i in range(len(y1)):
+        res.append(y1[i]/y2[i])
+    print(res)
+    return np.array(res)
+
+
+def plot_function(xs, fun, name):
+    ys = cal_fun(xs, fun)
+    y1 = ys[1:]
+    y2 = ys[:-1]
+    quo = cal_quo(y1, y2)
+    it = np.arange(ys.shape[0]-1)
+    plt.plot(it, quo, 'b', label="alpha=1")
+    plt.yscale("log")
+    plt.title(name)
+    plt.xlabel("iteration")
+    plt.ylabel("f(x_k)/f(x_k-1)")
+    plt.legend()
+
+
+def plot_function1(xs, fun, name):
+    ys = cal_fun(xs, fun)
+    y1 = ys[1:]
+    y2 = ys[:-1]
+    quo = cal_quo(y1, y2)
+    it = np.arange(ys.shape[0]-1)
+    plt.plot(it, quo, 'c', label="alpha=1000")
+    plt.yscale("log")
+    plt.title(name)
+    plt.xlabel("iteration")
+    plt.ylabel("f(x_k)/f(x_k-1)")
+    plt.legend()
+
+
+def steepest_descent(_x, fun, fun_g, max_iter=100, name=""):
     x = _x
     count = 0
     gradient = []
     xs = []
-    while np.linalg.norm(fun_g(x)) > 1e-6 and count < max_iter:
+    while np.linalg.norm(fun_g(x)) > 1e-6:
         p = -fun_g(x)
         alpha = backtracking(p, x, fun, fun_g)
         # alpha = backtracking_LS(x, fun, fun_g, p)
@@ -81,14 +130,38 @@ def steepest_descent(_x, fun, fun_g, max_iter=1000, name=""):
         xs.append(xx)
         count += 1
     # print("steepest steps:", count)
-    plot_gradient(np.array(gradient), "Steepest Descent - "+name)
-    plot_distance(np.array(xs), "Steepest Descent - "+name)
+    # plot_gradient(np.array(gradient), "Steepest Descent - "+name)
+    plot_function(np.array(xs), fun, "Steepest Descent - "+name)
+    # plot_distance(np.array(xs), "Steepest Descent - "+name)
     # plot_convergence(np.array(xs), fun, "Steepest Descent", 'c')
     # return x, fun(x), count
     return x
 
 
-def newton(_x, fun, fun_g, fun_h, beta=1e-3, max_iter=1000, name=""):
+def steepest_descent1(_x, fun, fun_g, max_iter=100, name=""):
+    x = _x
+    count = 0
+    gradient = []
+    xs = []
+    while np.linalg.norm(fun_g(x)) > 1e-6:
+        p = -fun_g(x)
+        alpha = backtracking1(p, x, fun, fun_g)
+        # alpha = backtracking_LS(x, fun, fun_g, p)
+        x += alpha * p
+        xx = list(x)
+        gradient.append(fun_g(x))
+        xs.append(xx)
+        count += 1
+    # print("steepest steps:", count)
+    # plot_gradient1(np.array(gradient), "Steepest Descent - "+name)
+    plot_function1(np.array(xs), fun, "Steepest Descent - " + name)
+    # plot_distance(np.array(xs), "Steepest Descent - "+name)
+    # plot_convergence(np.array(xs), fun, "Steepest Descent", 'c')
+    # return x, fun(x), count
+    return x
+
+
+def newton(_x, fun, fun_g, fun_h, beta=1e-3, max_iter=100, name=""):
     x = _x
     count = 0
     gradient = []
@@ -125,11 +198,12 @@ def newton(_x, fun, fun_g, fun_h, beta=1e-3, max_iter=1000, name=""):
 
 def test_1(x):
     print("Ellipsoid test")
+    res2 = steepest_descent1(np.array(x), func.ellipsoid, func.ellipsoid_d1, name="f1")
     res1 = steepest_descent(np.array(x), func.ellipsoid, func.ellipsoid_d1, name="f1")
     print(res1)
     print(func.ellipsoid(res1))
 
-    res2 = newton(np.array(x), func.ellipsoid, func.ellipsoid_d1, func.ellipsoid_d2, name="f1")
+    # res2 = newton(np.array(x), func.ellipsoid, func.ellipsoid_d1, func.ellipsoid_d2, name="f1")
     print(res2)
     print(func.ellipsoid(res2))
 
@@ -178,14 +252,14 @@ def test_5(x):
     print(func.f_5(res2))
 
 
-x0 = [2.0, 5.0, 10.0, 4.0, 8.0]
+x0 = [2.0, 4.0]
 x1 = [2.0, 4.0]
-# test_1(x0)
-# plt.show()
+test_1(x0)
+plt.show()
 # test_2(x1)
 # plt.show()
-test_3(x0)
-plt.show()
+# test_3(x0)
+# plt.show()
 # test_4(x0)
 # plt.show()
 # test_5(x0)
