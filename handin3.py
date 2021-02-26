@@ -1,6 +1,7 @@
 import numpy as np
 import handin1 as func
 import matplotlib.pyplot as plt
+import time
 
 
 def is_pos_def(x):
@@ -24,15 +25,35 @@ def plot_distance(xs, name):
     plt.show()
 
 
-def plot_convergence(xs, name):
-    _x = xs[-1]
-    it = np.arange(xs.shape[0]-1)
-    plt.plot(it, np.linalg.norm(xs[1:]-_x, axis=1)**2/np.linalg.norm(xs[:-1]-_x, axis=1)**2, 'b')
+# def cal_convergence(xs, alpha=1.0):
+#     d = xs.shape[1]
+#     res = []
+#     for x in xs:
+#         res.append(x.T @ np.diag(alpha ** (np.arange(d)/4)) @ x)
+#     return np.array(res)
+
+def cal_rate_convergence(xs, fun):
+    x_ = xs[-1]
+    x1 = xs[:-1]
+    x2 = xs[1:]
+    res = []
+    for i in range(len(x1)):
+        res.append((fun(x2[i])-fun(x_))/(fun(x1[i])-fun(x_)))
+    return np.array(res)
+
+
+def plot_convergence(xs, fun, label, color='b'):
+    # _x = xs[-1]
+    # xx = cal_convergence(xs)
+    xx = cal_rate_convergence(xs, fun)
+    it = np.arange(xs.shape[0]-2)
+    plt.plot(it, xx[:-1], c=color, label=label)
+    plt.legend()
     plt.yscale("log")
-    plt.title(name)
+    # plt.title(name)
     plt.xlabel("iteration")
-    plt.ylabel("convergence of x")
-    plt.show()
+    plt.ylabel("convergence rate of x")
+    # plt.show()
 
 
 def plot_gradient(g, name):
@@ -45,7 +66,8 @@ def plot_gradient(g, name):
     plt.show()
 
 
-def steepest_descent(x, fun, fun_g, max_iter=5000, name=""):
+def steepest_descent(_x, fun, fun_g, max_iter=1000, name=""):
+    x = _x
     count = 0
     gradient = []
     xs = []
@@ -58,18 +80,20 @@ def steepest_descent(x, fun, fun_g, max_iter=5000, name=""):
         gradient.append(fun_g(x))
         xs.append(xx)
         count += 1
-    print("steepest steps:", count)
+    # print("steepest steps:", count)
     plot_gradient(np.array(gradient), "Steepest Descent - "+name)
-    plot_convergence(np.array(xs), "Steepest Descent - "+name)
     plot_distance(np.array(xs), "Steepest Descent - "+name)
+    # plot_convergence(np.array(xs), fun, "Steepest Descent", 'c')
+    # return x, fun(x), count
     return x
 
 
-def newton(x, fun, fun_g, fun_h, beta=1e-3, max_iter=5000, name=""):
+def newton(_x, fun, fun_g, fun_h, beta=1e-3, max_iter=1000, name=""):
+    x = _x
     count = 0
     gradient = []
     xs = []
-    while np.linalg.norm(fun_g(x)) > 1e-6 and count < max_iter:
+    while np.linalg.norm(fun_g(x)) > 1e-8 and count < max_iter:
         hessian = fun_h(x)
         if not is_pos_def(hessian):
             diag = hessian.diagonal()
@@ -91,11 +115,12 @@ def newton(x, fun, fun_g, fun_h, beta=1e-3, max_iter=5000, name=""):
         gradient.append(fun_g(x))
         xs.append(xx)
         count += 1
-    print("Newton steps:", count)
+    # print("Newton steps:", count)
     plot_gradient(np.array(gradient), "Newton's Method - "+name)
-    plot_convergence(np.array(xs), "Newton's Method - "+name)
     plot_distance(np.array(xs), "Newton's Method - "+name)
+    # plot_convergence(np.array(xs), fun, "Newton's Method")
     return x
+    # return x, fun(x), count
 
 
 def test_1(x):
@@ -153,14 +178,57 @@ def test_5(x):
     print(func.f_5(res2))
 
 
-x0 = [2.0, 4.0]
+x0 = [2.0, 5.0, 10.0, 4.0, 8.0]
 x1 = [2.0, 4.0]
 # test_1(x0)
+# plt.show()
 # test_2(x1)
-# test_3(x0)
-test_4(x0)
+# plt.show()
+test_3(x0)
+plt.show()
+# test_4(x0)
+# plt.show()
 # test_5(x0)
+# plt.show()
 
 
+def testing(fun, fun_g, fun_h, length=2, name=""):
+    time_s = 0
+    time_n = 0
+    iter_s = 0
+    iter_n = 0
+    succ_s = 0
+    succ_n = 0
+    val_s = 0
+    val_n = 0
+    for i in range(100):
+        x = np.random.rand(length) * 5
 
+        tmp1 = time.process_time()
+        x_, val, c = steepest_descent(x, fun, fun_g)
+        tmp2 = time.process_time()
+        time_s += tmp2-tmp1
+        iter_s += c
+        val_s += val
+        if np.linalg.norm(fun_g(x_)) <= 1e-6:
+            succ_s += 1
+
+        tmp1 = time.process_time()
+        x_, val, c = newton(x, fun, fun_g, fun_h)
+        tmp2 = time.process_time()
+        time_n += tmp2 - tmp1
+        iter_n += c
+        val_n += val
+        if np.linalg.norm(fun_g(x_)) <= 1e-6:
+            succ_n += 1
+
+    print(name, "\nSteepest:", time_s/100, iter_s/100, succ_s/100, val_s/100,
+          "\nNewton:", time_n/100, iter_n/100, succ_n/100, val_n/100, '\n')
+
+
+# testing(func.ellipsoid, func.ellipsoid_d1, func.ellipsoid_d2, name="f1")
+# testing(func.Rosenbrock, func.Grad_Ros, func.Hessian_Ros, name="f2")
+# testing(func.log_ellipsoid, func.log_ellipsoid_d1, func.log_ellipsoid_d2, name="f3")
+# testing(func.f_4, func.f_4grad, func.f_4hessian, name="f4")
+# testing(func.f_5, func.f_5grad, func.f_5hessian, name="f5")
 
