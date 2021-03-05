@@ -22,6 +22,7 @@ def trust_region_subproblem(gradient, hessian, lambda_0, delta, max_iter=1000):
         # try:
         if vector[:, min_index].T @ gradient == 0:
             p = hard_case(gradient, hessian, delta, lambda_j, vector, min_index)
+            return p
         else:
             p = np.linalg.inv(B_) @ (-gradient)
 
