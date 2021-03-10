@@ -6,7 +6,13 @@ import time
 
 
 def is_pos_def(x):
-    return np.all(np.linalg.eigvals(x) > 0)
+    try:
+        np.linalg.inv(x)
+    except:
+        return False
+    return True
+
+    # return np.all(np.linalg.eigvals(x) > 0)
 
 
 def trust_region_subproblem(gradient, hessian, lambda_0, delta, max_iter=100):
@@ -40,6 +46,45 @@ def trust_region_subproblem(gradient, hessian, lambda_0, delta, max_iter=100):
             break
         else:
             lam = lam_new
+
+    print(lambda_0, count)
+    return p
+
+
+def sub_solve_2(g, B, x0, delta0):
+    atol = 1e-8
+    delta, x0 = delta0, np.array(x0)
+    x, gx, hx = x0, g(x0), B
+    gx_norm = np.linalg.norm(gx)
+    lmds, Q = np.linalg.eig(hx)
+    minIdx  = np.argmin(lmds)
+    #is_psd  = lmds[minIdx] >= -atol
+    if Q[:, minIdx].T @ gx != 0:
+        if lmds[minIdx] > atol:
+            lmd = 0
+        else:
+            lmd = -lmds[minIdx] + atol
+        while True:
+            B_inv = Q @ np.diag(1 / (lmds + lmd)) @ Q.T
+            p     = B_inv @ -gx
+            p_n   = np.linalg.norm(p)
+            if p_n <= delta + atol:
+                break
+            p_n2  = p_n*p_n
+            q_n2  = p.T @ B_inv @ p
+            lmd   = lmd + (p_n2/q_n2) * (p_n - delta) / delta
+    else:
+        print(f"Hard case! (||gx|| = {gx_norm})")
+        p_n = delta
+        if gx_norm == 0:
+            p = delta*Q[:, minIdx]
+        else:
+            p = delta*(-gx/gx_norm)
+            gBg = gx.T @ hx @ gx
+            if gBg > 0:
+                tau = (gx_norm*gx_norm*gx_norm) / (delta * gBg)
+                if tau < 1:
+                    p, p_n = p*tau, p_n*tau
     return p
 
 
@@ -56,7 +101,7 @@ def hard_case(gradient, hessian, delta, lambda_j, vector, min_index):
     return p
 
 
-def trust_region_sr1(_x, fun, fun_g, _B, _delta, tol=1e-3, eta=1e-4, r=1e-8, max_iter=1000):
+def trust_region_sr1(_x, fun, fun_g, _B, _delta, tol=1e-8, eta=1e-8, r=1e-8, max_iter=1000):
     xs = [_x]
     deltas = [_delta]
     x = _x
@@ -66,14 +111,14 @@ def trust_region_sr1(_x, fun, fun_g, _B, _delta, tol=1e-3, eta=1e-4, r=1e-8, max
     while count < max_iter and np.linalg.norm(fun_g(x)) > tol:
         count += 1
         g = fun_g(x)
-        if is_pos_def(B):
-            if np.linalg.norm(np.linalg.inv(B) @ g) <= delta:
-                s = -np.linalg.inv(B) @ g
-            else:
-                s = trust_region_subproblem(g, B, 0, delta)
-        else:
-            s = trust_region_subproblem(g, B, -min(np.linalg.eigvals(B))+1e-3, delta)
-
+        # if is_pos_def(B):
+        #     if np.linalg.norm(np.linalg.inv(B) @ g) <= delta:
+        #         s = -np.linalg.inv(B) @ g
+        #     else:
+        #         s = trust_region_subproblem(g, B, -min(np.linalg.eigvals(B))+1e-3, delta)
+        # else:
+        #     s = trust_region_subproblem(g, B, -min(np.linalg.eigvals(B))+1e-3, delta)
+        s = sub_solve_2(fun_g, B, x, delta)
         y = fun_g(x+s) - fun_g(x)
         ared = fun(x) - fun(x+s)
         pred = -(g.T @ s + 1/2 * s.T @ B @ s)
@@ -99,7 +144,8 @@ def trust_region_sr1(_x, fun, fun_g, _B, _delta, tol=1e-3, eta=1e-4, r=1e-8, max
         elif (y - B @ s).T @ s < r:  # r?
             pass
         elif abs(s.T @ (y - B @ s)) >= r * np.linalg.norm(s) * np.linalg.norm(y - B @ s):
-            B = B + ((y - B @ s) @ (y - B @ s).T)/((y - B @ s).T @ s)
+            B = B + np.outer((y - B @ s), (y - B @ s)) / ((y - B @ s).T @ s)
+
 
         xs.append(x)
         deltas.append(delta)
@@ -128,9 +174,9 @@ def testing(fun, fun_g, fun_h, length=2, name=""):
     print(name, "\n", "time:", time_s/100, "iter", iter_s/100, "succ", succ_s/100, "val", val_s/100, '\n')
 
 
-# testing(func.ellipsoid, func.ellipsoid_d1, func.ellipsoid_d2, name="f1")
+testing(func.ellipsoid, func.ellipsoid_d1, func.ellipsoid_d2, name="f1")
 testing(func.Rosenbrock, func.Grad_Ros, func.Hessian_Ros, name="f2")
-# testing(func.log_ellipsoid, func.log_ellipsoid_d1, func.log_ellipsoid_d2, name="f3")
-# testing(func.f_4, func.f_4grad, func.f_4hessian, name="f4")
-# testing(func.f_5, func.f_5grad, func.f_5hessian, name="f5")
+testing(func.log_ellipsoid, func.log_ellipsoid_d1, func.log_ellipsoid_d2, name="f3")
+testing(func.f_4, func.f_4grad, func.f_4hessian, name="f4")
+testing(func.f_5, func.f_5grad, func.f_5hessian, name="f5")
 
