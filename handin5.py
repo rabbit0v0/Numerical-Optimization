@@ -6,13 +6,13 @@ import time
 
 
 def is_pos_def(x):
-    try:
-        np.linalg.inv(x)
-    except:
-        return False
-    return True
+    # try:
+    #     np.linalg.inv(x)
+    # except:
+    #     return False
+    # return True
 
-    # return np.all(np.linalg.eigvals(x) > 0)
+    return np.all(np.linalg.eigvals(x) > 0)
 
 
 def trust_region_subproblem(gradient, hessian, lambda_0, delta, max_iter=100):
@@ -21,13 +21,11 @@ def trust_region_subproblem(gradient, hessian, lambda_0, delta, max_iter=100):
     lambda_1 = min(lambda_j)
     min_index = argmin(lambda_j)
     lam = lambda_0
-    p = 0
+    p = np.linalg.inv(hessian) @ (-gradient)
     count = 0
     while lam >= -lambda_1 and count < max_iter:
         count += 1
-        # print(hessian)
         B_ = hessian + lam * np.identity(d)
-        # print(B_)
         # try:
         if vector[:, min_index].T @ gradient == 0:
             p = hard_case(gradient, hessian, delta, lambda_j, vector, min_index)
@@ -41,13 +39,13 @@ def trust_region_subproblem(gradient, hessian, lambda_0, delta, max_iter=100):
         lam_new = lam + (np.linalg.norm(p) / np.linalg.norm(q)) ** 2 * (
             (np.linalg.norm(p) - delta) / delta
         )
-        if lam_new == lam or (count >= max_iter and np.linalg.norm(p) <= delta):
+        if lam_new == lam or (count >= max_iter and np.linalg.norm(p) <= delta) or (lam_new < -lambda_1):
             # return p
             break
         else:
             lam = lam_new
 
-    print(lambda_0, count)
+    # print(lambda_0, count)
     return p
 
 
@@ -74,7 +72,7 @@ def sub_solve_2(g, B, x0, delta0):
             q_n2  = p.T @ B_inv @ p
             lmd   = lmd + (p_n2/q_n2) * (p_n - delta) / delta
     else:
-        print(f"Hard case! (||gx|| = {gx_norm})")
+        # print(f"Hard case! (||gx|| = {gx_norm})")
         p_n = delta
         if gx_norm == 0:
             p = delta*Q[:, minIdx]
@@ -101,12 +99,13 @@ def hard_case(gradient, hessian, delta, lambda_j, vector, min_index):
     return p
 
 
-def trust_region_sr1(_x, fun, fun_g, _B, _delta, tol=1e-8, eta=1e-8, r=1e-8, max_iter=1000):
+def trust_region_sr1(_x, fun, fun_g, _delta, tol=1e-6, eta=1e-4, r=1e-8, max_iter=1000):
     xs = [_x]
     deltas = [_delta]
     x = _x
     delta = _delta
-    B = _B
+    # B = _B
+    B = np.identity(len(_x))
     count = 0
     while count < max_iter and np.linalg.norm(fun_g(x)) > tol:
         count += 1
@@ -115,7 +114,7 @@ def trust_region_sr1(_x, fun, fun_g, _B, _delta, tol=1e-8, eta=1e-8, r=1e-8, max
         #     if np.linalg.norm(np.linalg.inv(B) @ g) <= delta:
         #         s = -np.linalg.inv(B) @ g
         #     else:
-        #         s = trust_region_subproblem(g, B, -min(np.linalg.eigvals(B))+1e-3, delta)
+        #         s = trust_region_subproblem(g, B, 0, delta)
         # else:
         #     s = trust_region_subproblem(g, B, -min(np.linalg.eigvals(B))+1e-3, delta)
         s = sub_solve_2(fun_g, B, x, delta)
@@ -153,6 +152,7 @@ def trust_region_sr1(_x, fun, fun_g, _B, _delta, tol=1e-8, eta=1e-8, r=1e-8, max
     return xs, fun(x), count, deltas
 
 
+
 def testing(fun, fun_g, fun_h, length=2, name=""):
     time_s = 0
     iter_s = 0
@@ -162,13 +162,14 @@ def testing(fun, fun_g, fun_h, length=2, name=""):
         x = np.random.rand(length) * 5
 
         tmp1 = time.process_time()
-        xs, val, c, dels = trust_region_sr1(x, fun, fun_g, fun_h(x), 1)
+        xs, val, c, dels = trust_region_sr1(x, fun, fun_g, 1)
+        # xs, val, c, dels = trust_region_sr1(x, fun, fun_g, fun_h(x), 1)
         x_ = xs[-1]
         tmp2 = time.process_time()
         time_s += tmp2-tmp1
         iter_s += c
         val_s += val
-        if np.linalg.norm(fun_g(x_)) <= 1e-3:
+        if np.linalg.norm(fun_g(x_)) <= 1e-6:
             succ_s += 1
 
     print(name, "\n", "time:", time_s/100, "iter", iter_s/100, "succ", succ_s/100, "val", val_s/100, '\n')
